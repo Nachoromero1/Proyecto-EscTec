@@ -5,9 +5,9 @@
     --card: rgba(255,255,255,0.03);
     --muted: rgba(255,255,255,0.6);
     --accent: #e2e8f0;
-    --neon-1: #02920e; /* mint */
+    --neon-1: #00f529; /* mint */
     --neon-2: #7c3aed; /* violet */
-    --neon-3: #1feb04; /* warm */
+    --neon-3: #ffb86b; /* warm */
     --danger: #ff5c7c;
     --success: #35e089;
   }

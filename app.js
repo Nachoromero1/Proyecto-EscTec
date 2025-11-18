@@ -50,6 +50,13 @@ const idleSpeedDegPerMs = 0.01; // ~10 deg/sec
 // neon palette to match CSS theme
 const colors = ["#7c3aed", "#00f5d4", "#ffb86b"];
 
+/* drawWheel
+   Dibuja la ruleta en el canvas principal:
+   - Calcula el ángulo de partida según `idleRotation` (rotación en reposo)
+   - Recorre los temas y dibuja cada 'slice' con color y texto
+   - Utiliza transformaciones del contexto para rotar y colocar el texto
+   Propósito educativo: mostrar cómo convertir ángulos en arcos en el canvas
+*/
 function drawWheel() {
   const startAngle = -Math.PI / 2 + (idleRotation * Math.PI) / 180;
   for (let i = 0; i < temas.length; i++) {
@@ -73,6 +80,11 @@ function drawWheel() {
 }
 drawWheel();
 
+/* startIdleRotation
+   Inicia una animación de 'idle' que hace girar la rueda lentamente cuando
+   el usuario no la está usando. Usa requestAnimationFrame y calcula el
+   incremento según el tiempo transcurrido (dt).
+*/
 function startIdleRotation() {
   if (idleRaf) return;
   let last = performance.now();
@@ -92,6 +104,9 @@ function startIdleRotation() {
   idleRaf = requestAnimationFrame(step);
 }
 
+/* stopIdleRotation
+   Detiene la animación idle cancelando el requestAnimationFrame en curso.
+*/
 function stopIdleRotation() {
   if (!idleRaf) return;
   cancelAnimationFrame(idleRaf);
@@ -105,6 +120,16 @@ document.getElementById("spin").addEventListener("click", spinWheel);
 const spinSound = document.getElementById("spinSound");
 const endSound = document.getElementById("endSound");
 
+/* spinWheel
+   Ejecuta la animación completa de giro cuando se pulsa el botón:
+   - Detiene la animación idle y guarda su ángulo actual
+   - Calcula una rotación aleatoria y duración aleatoria
+   - Anima con una función de easing para una desaceleración suave
+   - Al finalizar calcula qué segmento queda bajo la flecha y muestra el
+     resultado (tema seleccionado). También reinicia la rotación idle.
+   Nota para estudiantes: la selección se calcula transformando ángulos
+   y comprobando en qué rango angular cae la flecha.
+*/
 function spinWheel() {
   // Reset UI state so clicking "Girar Ruleta" regenerates a new session
   clearInterval(timer);
@@ -193,6 +218,12 @@ function spinWheel() {
 let currentQuestion = 0, score = 0, selectedTema, timer;
 let questionResults = [];
 
+/* iniciarQuiz
+   Prepara y arranca el quiz para el tema seleccionado:
+   - Muestra la sección del quiz
+   - Inicializa contadores y resultados por pregunta
+   - Llama a mostrar la primera pregunta
+*/
 function iniciarQuiz(tema) {
   selectedTema = tema;
   document.getElementById("resultado").style.display = "none";
@@ -205,6 +236,11 @@ function iniciarQuiz(tema) {
   mostrarPregunta();
 }
 
+/* mostrarPregunta
+   Carga la pregunta actual desde el arreglo `preguntas` según el tema
+   y el índice `currentQuestion`. Genera los botones de opciones y
+   arranca el temporizador para esa pregunta.
+*/
 function mostrarPregunta() {
   updateProgress();
   const preguntaActual = preguntas[selectedTema][currentQuestion];
@@ -223,6 +259,13 @@ function mostrarPregunta() {
   iniciarTimer(30);
 }
 
+/* responder
+   Procesa la opción elegida por el alumno:
+   - Cancela el temporizador
+   - Marca la opción correcta/incorrecta visualmente
+   - Actualiza el array `questionResults` y el contador `score`
+   - Avanza a la siguiente pregunta o muestra el resultado final
+*/
 function responder(selectedIndex) {
   clearInterval(timer);
   const preguntaActual = preguntas[selectedTema][currentQuestion];
@@ -265,6 +308,10 @@ function responder(selectedIndex) {
   }, 1000);
 }
 
+/* iniciarTimer
+   Inicia un temporizador visible en pantalla para la pregunta actual.
+   Cuando el tiempo llega a cero llama a `responder(-1)` para indicar timeout.
+*/
 function iniciarTimer(segundos) {
   let tiempo = segundos;
   const timerDisplay = document.getElementById("timer");
@@ -279,6 +326,10 @@ function iniciarTimer(segundos) {
   }, 1000);
 }
 
+/* mostrarResultado
+   Muestra la pantalla final con el puntaje obtenido, guarda el resultado
+   en localStorage y renderiza un resumen por pregunta.
+*/
 function mostrarResultado() {
   document.getElementById("quiz").style.display = "none";
   document.getElementById("final").style.display = "block";
@@ -289,6 +340,10 @@ function mostrarResultado() {
   // histograma eliminado — solo se persiste el puntaje
 }
 
+/* renderPerQuestionResults
+   Muestra pequeñas etiquetas (chips) que indican para cada pregunta si
+   fue correcta, incorrecta o un timeout. Se usan en la pantalla final.
+*/
 function renderPerQuestionResults(){
   const container = document.getElementById('perQuestionResults');
   if(!container) return;
@@ -306,6 +361,10 @@ function renderPerQuestionResults(){
 /* ---------------- Theme toggle, Progress bar and Score persistence ---------------- */
 
 const themeToggle = document.getElementById('themeToggle');
+/* initTheme
+   Lee la preferencia de tema (dark/light) desde localStorage y aplica el
+   atributo `data-theme` al documento. Luego actualiza el botón visible.
+*/
 function initTheme(){
   try{
     const t = localStorage.getItem('ruleta_theme') || 'dark';
@@ -314,6 +373,9 @@ function initTheme(){
     updateThemeButton();
   }catch(e){console.warn(e)}
 }
+/* toggleTheme
+   Alterna el tema entre claro y oscuro y guarda la selección en localStorage.
+*/
 function toggleTheme(){
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   if(isLight){
@@ -325,6 +387,10 @@ function toggleTheme(){
   }
   updateThemeButton();
 }
+/* updateThemeButton
+   Actualiza la apariencia y atributos del botón de tema según el
+   estado actual (para accesibilidad y retroalimentación visual).
+*/
 function updateThemeButton(){
   const btn = themeToggle;
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
@@ -337,6 +403,10 @@ if(themeToggle){
 }
 
 // progress
+/* updateProgress
+   Actualiza la barra de progreso en pantalla mostrando el porcentaje de
+   preguntas respondidas respecto al total.
+*/
 function updateProgress(){
   const bar = document.getElementById('progressBar');
   if(!bar) return;
@@ -345,6 +415,11 @@ function updateProgress(){
 }
 
 // scores persistence and histogram
+/* saveScore
+   Guarda el puntaje obtenido en localStorage bajo la clave 'ruleta_scores'.
+   - Coercea el valor a entero
+   - Limita el historial a las últimas 200 entradas
+*/
 function saveScore(value){
   try{
     const key = 'ruleta_scores';
