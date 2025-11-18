@@ -5,14 +5,29 @@
     --card: rgba(255,255,255,0.03);
     --muted: rgba(255,255,255,0.6);
     --accent: #e2e8f0;
-    --neon-1: #00f5d4; /* mint */
+    --neon-1: #02920e; /* mint */
     --neon-2: #7c3aed; /* violet */
-    --neon-3: #ffb86b; /* warm */
+    --neon-3: #1feb04; /* warm */
     --danger: #ff5c7c;
     --success: #35e089;
   }
 
+  /* Light theme overrides (applied via [data-theme="light"]) */
+  [data-theme="light"]{
+    --bg-1: #f8fafc;
+    --bg-2: #e6eef6;
+    --card: rgba(10,15,20,0.03);
+    --muted: rgba(10,10,10,0.6);
+    --accent: #071029;
+    --neon-1: #0f766e; /* teal */
+    --neon-2: #5b21b6; /* deep violet */
+    --neon-3: #c2410c; /* warm orange */
+    --danger: #b91c1c;
+    --success: #047857;
+  }
+
   *{box-sizing:border-box}
+  html{height:100%; overflow-x:hidden}
   body{
     margin:0;
     font-family: Inter, Poppins, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -24,22 +39,62 @@
     flex-direction:column;
     align-items:center;
     min-height:100vh;
-    padding:36px 16px 64px;
+    padding:20px 12px; /* reduced padding to avoid initial overflow */
+  }
+
+  /* prevent decorative pseudo-elements from creating page overflow */
+  #wheelContainer::before, #arrow {box-sizing:border-box;}
+
+  /* avoid accidental horizontal scroll on small viewports */
+  @supports (overflow: clip) {
+    html { overflow-x: hidden; }
   }
 
   #wheelContainer{
     position:relative;
     width:min(520px,95vw);
-    margin-top:12px;
+    padding-top:36px; /* reserve space for arrow inside container */
+    margin:12px auto;
     /* floating and neon ring */
     will-change:transform;
     animation: floatSlow 6s ease-in-out infinite;
     filter:drop-shadow(0 30px 60px rgba(0,0,0,0.5));
+    max-height: calc(100vh - 40px);
+    display:flex;align-items:center;justify-content:center;
   }
+
+/* Controls area (top) */
+#controls{width:100%; display:flex; justify-content:flex-end; max-width:1100px}
+.theme-toggle{appearance:none;border:0;background:transparent;color:var(--accent);font-size:18px;padding:6px 10px;border-radius:8px;cursor:pointer;box-shadow:0 6px 20px rgba(2,6,23,0.18);transition:transform .18s ease,background .18s ease}
+.theme-toggle:hover{transform:translateY(-4px)}
+
+/* Progress bar inside quiz */
+#progress{width:100%;height:12px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden;margin:12px 0}
+#progressBar{height:100%;width:0%;background:linear-gradient(90deg,var(--neon-2),var(--neon-1));border-radius:999px;transition:width .45s cubic-bezier(.2,.9,.2,1);box-shadow:0 6px 18px rgba(124,58,237,0.08) inset}
+
+/* Histogram styles for final results */
+.histogram{margin-top:14px}
+.histRow{display:flex;align-items:center;gap:10px;margin:6px 0}
+.histLabel{width:28px;font-weight:700;color:var(--muted);font-size:13px}
+.histBar{flex:1;background:rgba(255,255,255,0.03);height:12px;border-radius:999px;overflow:hidden}
+.histFill{height:100%;background:linear-gradient(90deg,var(--neon-1),var(--neon-3));width:0%;transition:width .6s cubic-bezier(.2,.9,.2,1)}
+.histCount{width:36px;text-align:right;font-weight:700;color:var(--muted);font-size:13px}
+
+.histActions{display:flex;gap:10px;align-items:center;margin-top:12px}
+.histActions .small{padding:8px 12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent);cursor:pointer}
+.histActions .small:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.18)}
+
+/* Per-question chips in final screen */
+.perQuestion{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.pqItem{width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.03)}
+.pqItem.correct{background:linear-gradient(90deg,var(--neon-1),var(--neon-3));color:#062814;border-color:rgba(53,224,137,0.15);box-shadow:0 8px 18px rgba(53,224,137,0.06)}
+.pqItem.wrong{background:linear-gradient(90deg, rgba(255,92,124,0.18), rgba(239,68,68,0.12));color:#2b0505;border-color:rgba(255,92,124,0.1);box-shadow:0 8px 18px rgba(255,92,124,0.06)}
+.pqItem.timeout{background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));color:var(--muted);border-color:rgba(255,255,255,0.02)}
 
   canvas{
     width:100%;
     height:auto;
+    max-height: calc(100vh - 120px); /* keep wheel within viewport */
     display:block;
     border-radius:50%;
     border:8px solid transparent;
@@ -47,18 +102,25 @@
     background:transparent;
     transition:transform .5s cubic-bezier(.2,.9,.2,1), box-shadow .35s ease, filter .35s ease;
     position:relative;
+    z-index:5; /* place the canvas above the halo */
   }
 
   /* neon ring around the wheel (uses container pseudo-element) */
   #wheelContainer::before{
     content:'';
     position:absolute;
-    inset: -9px; /* slightly closer to the canvas */
+    /* align the halo to the actual canvas area (below the top padding reserved for the arrow)
+       make it a perfect square so it matches the circular canvas size */
+    top:36px;
+    left:50%;
+    transform:translateX(-50%);
+    width:calc(100% - 36px);
+    aspect-ratio:1/1;
     border-radius:50%;
     background: conic-gradient(from 90deg, rgba(124,58,237,0.6), rgba(0,245,212,0.55), rgba(255,184,107,0.5), rgba(124,58,237,0.6));
-    filter: blur(10px) saturate(110%);
-    opacity:0.18; /* much more subtle */
-    z-index:2;
+    filter: blur(12px) saturate(110%);
+    opacity:0.18; /* subtle by default */
+    z-index:1; /* keep it behind canvas and arrow */
     pointer-events:none;
     transition:opacity .25s ease, transform .4s cubic-bezier(.2,.9,.2,1);
   }
@@ -70,7 +132,7 @@
     border-right:14px solid transparent;
     border-bottom:22px solid var(--neon-1);
     position:absolute;
-    bottom:calc(100% + 8px);
+    top:12px; /* place arrow inside container to avoid negative overflow */
     left:50%;
     transform:translateX(-50%) rotate(180deg);
     z-index:10;
@@ -190,7 +252,8 @@
 @media (max-width: 768px) {
   body{padding:20px 12px 36px}
   #wheelContainer{width:min(420px,96vw); margin-top:8px}
-  #wheelContainer::before{opacity:0.12; filter:blur(8px) saturate(100%)}
+  /* ensure halo stays aligned with the wheel on medium screens */
+  #wheelContainer::before{opacity:0.12; filter:blur(8px) saturate(100%); top:auto; bottom:6px; width:calc(100% - 36px); transform:translateX(-50%); aspect-ratio:1/1}
   canvas{border:6px solid transparent; box-shadow:0 12px 30px rgba(0,0,0,0.45)}
   #arrow{border-left:12px solid transparent; border-right:12px solid transparent; border-bottom:18px solid var(--neon-1); bottom:calc(100% + 6px)}
   button{padding:10px 18px; font-size:15px; border-radius:10px}
@@ -203,15 +266,32 @@
 @media (max-width: 420px){
   /* further simplify and reduce heavy visual effects for small devices */
   body{padding:14px 10px 28px}
-  #wheelContainer{width:92vw; margin-top:6px; animation:none}
-  #wheelContainer::before{opacity:0.08; filter:blur(6px) saturate(95%)}
+  #wheelContainer{width:92vw; margin-top:6px; animation:none; margin-left:auto; margin-right:auto}
+  #wheelContainer::before{opacity:0.08; filter:blur(6px) saturate(95%); top:auto; bottom:4px; width:calc(100% - 32px); transform:translateX(-50%); aspect-ratio:1/1}
   canvas{box-shadow:0 8px 20px rgba(0,0,0,0.36)}
   #arrow{border-left:10px solid transparent; border-right:10px solid transparent; border-bottom:16px solid var(--neon-1); bottom:calc(100% + 4px)}
   button{width:86%; max-width:320px; padding:10px 14px; font-size:14px}
+  button#spin{display:block;margin:18px auto}
+  #controls{justify-content:center}
   #resultado,#quiz,#final{padding:14px; margin:12px auto; box-shadow:0 10px 26px rgba(0,0,0,0.36); border:1px solid rgba(255,255,255,0.02); backdrop-filter:none}
   #resultado h2, #quiz h2, #final h2{font-size:16px}
   .option{padding:10px; font-size:14px}
   .option:hover{transform:translateX(4px) translateY(-2px)}
   /* disable some heavy animations */
   #arrow, #wheelContainer{animation:none}
+
+  /* center cards and text for mobile */
+  #resultado, #quiz, #final{align-items:center;text-align:center}
+  #pregunta{font-size:16px}
+  #opciones{display:flex;flex-direction:column;align-items:stretch}
+  .perQuestion{justify-content:center}
+  .pqItem{width:34px;height:34px;font-size:13px}
+}
+
+/* ensure canvas is responsive and centered on all sizes */
+canvas{max-width:100%;height:auto;display:block;margin:0 auto}
+
+/* center the top controls on small screens */
+@media (max-width: 520px){
+  #controls{justify-content:center}
 }

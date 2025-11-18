@@ -7,6 +7,9 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="controls">
+  <button id="themeToggle" class="theme-toggle" aria-pressed="false" title="Cambiar tema">🌙</button>
+</div>
 
 <div id="wheelContainer">
   <div id="arrow"></div>
@@ -21,6 +24,7 @@
 
 <div id="quiz">
   <h2 id="pregunta"></h2>
+  <div id="progress" aria-hidden="false"><div id="progressBar"></div></div>
   <div id="opciones"></div>
   <div id="timer"></div>
 </div>
@@ -28,7 +32,10 @@
 <div id="final">
   <h2>Resultado Final</h2>
   <p id="puntaje"></p>
-  <button onclick="location.reload()">Volver a la Ruleta</button>
+  <div id="perQuestionResults" class="perQuestion" aria-live="polite"></div>
+  <div class="histActions">
+    <button onclick="location.reload()">Volver a la Ruleta</button>
+  </div>
 </div>
 
 <audio id="spinSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_91c2f01fa3.mp3"></audio>

@@ -42,6 +42,7 @@ const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 const size = canvas.width / 2;
 const arc = 2 * Math.PI / temas.length;
+const TOTAL_QUESTIONS = 10;
 // idle rotation (degrees) when wheel is in rest state
 let idleRotation = 0;
 let idleRaf = null;
@@ -190,6 +191,7 @@ function spinWheel() {
 }
 
 let currentQuestion = 0, score = 0, selectedTema, timer;
+let questionResults = [];
 
 function iniciarQuiz(tema) {
   selectedTema = tema;
@@ -197,10 +199,14 @@ function iniciarQuiz(tema) {
   document.getElementById("quiz").style.display = "block";
   currentQuestion = 0;
   score = 0;
+  // reset per-question results
+  questionResults = new Array(TOTAL_QUESTIONS).fill('skipped');
+  const perQ = document.getElementById('perQuestionResults'); if(perQ) perQ.innerHTML = '';
   mostrarPregunta();
 }
 
 function mostrarPregunta() {
+  updateProgress();
   const preguntaActual = preguntas[selectedTema][currentQuestion];
   document.getElementById("pregunta").innerText = preguntaActual.q;
   const opcionesDiv = document.getElementById("opciones");
@@ -224,6 +230,10 @@ function responder(selectedIndex) {
   const children = Array.from(opcionesDiv.children);
 
   const correctIndex = preguntaActual.c;
+  // record result for this question (currentQuestion is the index being answered)
+  if (selectedIndex === correctIndex) questionResults[currentQuestion] = 'correct';
+  else if (selectedIndex === -1) questionResults[currentQuestion] = 'timeout';
+  else questionResults[currentQuestion] = 'wrong';
   children.forEach((child, i) => {
     child.style.pointerEvents = 'none';
     child.classList.remove('correct', 'wrong');
@@ -273,4 +283,83 @@ function mostrarResultado() {
   document.getElementById("quiz").style.display = "none";
   document.getElementById("final").style.display = "block";
   document.getElementById("puntaje").innerText = `Respuestas correctas: ${score} de 10`;
+  // persistir y mostrar histograma
+  saveScore(score);
+  renderPerQuestionResults();
+  // histograma eliminado — solo se persiste el puntaje
 }
+
+function renderPerQuestionResults(){
+  const container = document.getElementById('perQuestionResults');
+  if(!container) return;
+  container.innerHTML = '';
+  for(let i=0;i<TOTAL_QUESTIONS;i++){
+    const val = questionResults[i] || 'skipped';
+    const div = document.createElement('div');
+    div.className = 'pqItem ' + (val === 'correct' ? 'correct' : (val === 'timeout' ? 'timeout' : (val === 'wrong' ? 'wrong' : 'timeout')));
+    div.innerText = (i+1);
+    div.title = val;
+    container.appendChild(div);
+  }
+}
+
+/* ---------------- Theme toggle, Progress bar and Score persistence ---------------- */
+
+const themeToggle = document.getElementById('themeToggle');
+function initTheme(){
+  try{
+    const t = localStorage.getItem('ruleta_theme') || 'dark';
+    if(t === 'light') document.documentElement.setAttribute('data-theme','light');
+    else document.documentElement.removeAttribute('data-theme');
+    updateThemeButton();
+  }catch(e){console.warn(e)}
+}
+function toggleTheme(){
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if(isLight){
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('ruleta_theme','dark');
+  } else {
+    document.documentElement.setAttribute('data-theme','light');
+    localStorage.setItem('ruleta_theme','light');
+  }
+  updateThemeButton();
+}
+function updateThemeButton(){
+  const btn = themeToggle;
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if(!btn) return;
+  btn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+  btn.innerText = isLight ? '☀️' : '🌙';
+}
+if(themeToggle){
+  themeToggle.addEventListener('click', toggleTheme);
+}
+
+// progress
+function updateProgress(){
+  const bar = document.getElementById('progressBar');
+  if(!bar) return;
+  const pct = Math.round((currentQuestion / TOTAL_QUESTIONS) * 100);
+  bar.style.width = `${Math.min(Math.max(pct,0),100)}%`;
+}
+
+// scores persistence and histogram
+function saveScore(value){
+  try{
+    const key = 'ruleta_scores';
+    const raw = localStorage.getItem(key);
+    const arr = raw ? JSON.parse(raw) : [];
+    // coerce to integer and clamp
+    let v = Number(value);
+    if (Number.isNaN(v)) v = 0;
+    v = Math.round(v);
+    v = Math.max(0, Math.min(TOTAL_QUESTIONS, v));
+    arr.push(v);
+    // keep last 200 entries max
+    if(arr.length > 200) arr.splice(0, arr.length - 200);
+    localStorage.setItem(key, JSON.stringify(arr));
+  }catch(e){console.warn('saveScore failed', e)}
+}
+// Init theme on load
+initTheme();
