@@ -1,4 +1,4 @@
-const temas = ["Tipos de Empresarios", "Gestión de Recursos Humanos", "Gestión Financiera"];
+const temas = ["Tipos de Empresarios", "Gestión de RR.HH", "Gestión Financiera"];
 const preguntas = {
   "Tipos de Empresarios": [
     { q: "¿Cuál de estos empresarios se enfoca en la innovación constante?", o: ["Operativo", "Innovador", "Estrategico", "Emprendedor"], c: 1 },
@@ -46,7 +46,8 @@ const arc = 2 * Math.PI / temas.length;
 let idleRotation = 0;
 let idleRaf = null;
 const idleSpeedDegPerMs = 0.01; // ~10 deg/sec
-const colors = ["#FFD166", "#06D6A0", "#118AB2"];
+// neon palette to match CSS theme
+const colors = ["#7c3aed", "#00f5d4", "#ffb86b"];
 
 function drawWheel() {
   const startAngle = -Math.PI / 2 + (idleRotation * Math.PI) / 180;
@@ -63,8 +64,8 @@ function drawWheel() {
     ctx.translate(size, size);
     ctx.rotate(sliceStart + arc / 2);
     ctx.textAlign = "right";
-    ctx.fillStyle = "black";
-    ctx.font = "bold 18px Poppins";
+    ctx.fillStyle = "rgba(8,10,14,0.95)"; // dark text for neon slices
+    ctx.font = "600 18px Inter, Poppins, sans-serif";
     ctx.fillText(temas[i], size - 10, 10);
     ctx.restore();
   }
