@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta de Gestión</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="wheelContainer">
+  <div id="arrow"></div>
+  <canvas id="wheel" width="500" height="500"></canvas>
+</div>
+<button id="spin">Girar Ruleta</button>
+
+<div id="resultado">
+  <h2 id="temaElegido"></h2>
+  <button id="irQuiz">Ir al Quiz</button>
+</div>
+
+<div id="quiz">
+  <h2 id="pregunta"></h2>
+  <div id="opciones"></div>
+  <div id="timer"></div>
+</div>
+
+<div id="final">
+  <h2>Resultado Final</h2>
+  <p id="puntaje"></p>
+  <button onclick="location.reload()">Volver a la Ruleta</button>
+</div>
+
+<audio id="spinSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_91c2f01fa3.mp3"></audio>
+<audio id="endSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_c1b9e4c168.mp3"></audio>
+
+<script src="app.js"></script>
+</body>
+</html>
